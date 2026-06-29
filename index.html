@@ -275,59 +275,6 @@ body { font-family: var(--font-main); color: var(--txt); }
   font-size: .8em; flex-shrink: 0; color: #fff; font-weight: 700;
 }
 
-/* ============================================================
-   SLIDE 4 — DIAGRAMA ER
-   ============================================================ */
-#er-container {
-  display: flex; gap: clamp(8px,1vw,14px); flex: 1; min-height: 0;
-}
-#er-canvas-wrap {
-  flex: 1; position: relative; overflow: hidden;
-  border: 1px solid var(--gris-l); border-radius: 12px;
-  background: rgba(0,0,0,.3);
-}
-#er-canvas { width: 100%; height: 100%; }
-#er-panel {
-  width: clamp(160px,18vw,240px); background: rgba(255,255,255,.04);
-  border: 1px solid var(--gris-l); border-radius: 12px;
-  padding: clamp(8px,1vw,14px); overflow-y: auto;
-  transition: all .3s;
-}
-#er-panel h4 { font-size: clamp(10px,1.1vw,14px); color: var(--dorado); margin-bottom: 8px; font-weight: 700; }
-#er-panel p { font-size: clamp(8px,.85vw,11px); color: var(--txt-m); margin-bottom: 8px; line-height: 1.5; }
-#er-attrs { list-style: none; }
-#er-attrs li {
-  font-size: clamp(8px,.85vw,11px); padding: 3px 0;
-  border-bottom: 1px solid var(--gris); color: var(--txt);
-  display: flex; align-items: center; gap: 5px;
-}
-#er-attrs li .badge {
-  font-size: .75em; padding: 1px 5px; border-radius: 4px; font-weight: 600;
-}
-.badge-pk { background: rgba(255,215,0,.2); color: var(--dorado); }
-.badge-fk { background: rgba(96,165,250,.2); color: var(--azul-fk); }
-.er-legend {
-  display: flex; gap: 12px; font-size: clamp(8px,.85vw,11px); margin-top: 6px;
-  flex-wrap: wrap;
-}
-.er-legend span { display: flex; align-items: center; gap: 4px; }
-.leg-dot { width: 10px; height: 10px; border-radius: 2px; }
-
-/* ============================================================
-   SLIDE 5 — MODELO LÓGICO
-   ============================================================ */
-#logical-wrap { display: flex; gap: clamp(8px,1vw,14px); flex: 1; min-height: 0; }
-#logical-canvas { flex: 1; border: 1px solid var(--gris-l); border-radius: 12px; background: rgba(0,0,0,.3); }
-#logical-panel {
-  width: clamp(170px,19vw,250px); background: rgba(255,255,255,.04);
-  border: 1px solid var(--gris-l); border-radius: 12px;
-  padding: clamp(8px,1vw,14px); overflow-y: auto;
-}
-.lp-field {
-  display: flex; align-items: center; gap: 6px; padding: 4px 0;
-  border-bottom: 1px solid var(--gris); font-size: clamp(8px,.85vw,11px);
-}
-.lp-field .badge { font-size: .7em; padding: 1px 5px; border-radius: 3px; font-weight: 700; }
 
 /* ============================================================
    SLIDE 6 — MODELO FÍSICO + OBJETOS PROGRAMABLES
@@ -603,23 +550,9 @@ body.present-mode #timer { top: 10px; right: 10px; }
   <div class="slide" id="slide-4">
     <div class="slide-time-badge">⏱ ~4 min</div>
     <div class="slide-title">Fase 1 · Modelo Conceptual ER</div>
-    <div class="slide-subtitle">Entidades, relaciones y cardinalidades — clic en cada entidad</div>
-
-    <div id="er-container">
-      <div id="er-canvas-wrap">
-        <canvas id="er-canvas"></canvas>
-      </div>
-      <div id="er-panel">
-        <h4 id="er-panel-title">👆 Selecciona una entidad</h4>
-        <p id="er-panel-desc" style="color:var(--txt-m);font-size:clamp(8px,.85vw,11px)">Haz clic en cualquier entidad del diagrama para ver sus atributos principales.</p>
-        <ul id="er-attrs"></ul>
-      </div>
-    </div>
-    <div class="er-legend">
-      <span><div class="leg-dot" style="background:var(--verde)"></div> Entidad</span>
-      <span><div class="leg-dot" style="background:var(--dorado)"></div> Entidad débil</span>
-      <span><div class="leg-dot" style="background:rgba(255,255,255,.15);border:1px solid var(--gris-l)"></div> Relación M:N</span>
-      <span style="color:var(--txt-m)">↔ relación · ╟ cardinalidad 1 · ⊳ cardinalidad N</span>
+    <div class="slide-subtitle">Entidades, relaciones y cardinalidades</div>
+    <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
+      <img src="Imagenes/ModeloConceptual.jpeg" alt="Modelo Conceptual ER" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;">
     </div>
   </div>
 
@@ -630,18 +563,8 @@ body.present-mode #timer { top: 10px; right: 10px; }
     <div class="slide-time-badge">⏱ ~4 min</div>
     <div class="slide-title">Fase 2 · Modelo Lógico Relacional</div>
     <div class="slide-subtitle">Notación crow's foot · PK/FK · Normalización 3FN</div>
-
-    <div id="logical-wrap">
-      <canvas id="logical-canvas"></canvas>
-      <div id="logical-panel">
-        <h4 id="lp-title" style="font-size:clamp(10px,1.1vw,14px);color:var(--dorado);margin-bottom:6px;font-weight:700">👆 Selecciona una tabla</h4>
-        <p id="lp-desc" style="font-size:clamp(8px,.85vw,11px);color:var(--txt-m);margin-bottom:8px">Haz clic en una tabla del diagrama para ver sus campos.</p>
-        <div id="lp-fields"></div>
-        <div id="lp-3fn" style="display:none;margin-top:10px;padding:8px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:8px">
-          <div style="font-size:clamp(8px,.85vw,11px);color:var(--dorado);font-weight:700;margin-bottom:4px">💡 Nota 3FN</div>
-          <div id="lp-3fn-text" style="font-size:clamp(7px,.8vw,11px);color:var(--txt-m);line-height:1.5"></div>
-        </div>
-      </div>
+    <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
+      <img src="Imagenes/ModeloLogico.jpeg" alt="Modelo Lógico Relacional" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;">
     </div>
   </div>
 
@@ -976,8 +899,6 @@ function togglePresentMode() {
 function onSlideEnter(n) {
   if (n === 2) animateStats();
   if (n === 3) animateChecklist();
-  if (n === 4) initER();
-  if (n === 5) initLogical();
 }
 
 function animateStats() {
@@ -1213,9 +1134,10 @@ function showSP(idx) {
 }
 
 /* ============================================================
-   DIAGRAMA ER — Canvas
+   DIAGRAMA ER — eliminado (reemplazado por Imagenes/ModeloConceptual.jpeg)
+   DIAGRAMA LÓGICO — eliminado (reemplazado por Imagenes/ModeloLogico.jpeg)
    ============================================================ */
-const ER_ENTITIES = [
+const ER_ENTITIES_UNUSED = [
   { id: 'Pais',             x:.08, y:.12, w:.14, h:.09, color:'#1a6b3c',
     attrs:[{n:'id_pais',t:'PK'},{n:'nombre',t:''},{n:'continente',t:''},{n:'codigo_fifa',t:''}],
     desc:'País participante o sede. Base geográfica del modelo.' },
@@ -1546,14 +1468,6 @@ function lgClick(e) {
   });
 }
 
-/* ============================================================
-   RESIZE
-   ============================================================ */
-window.addEventListener('resize', () => {
-  erInitialized = false; lgInitialized = false;
-  if (current === 4) initER();
-  if (current === 5) initLogical();
-});
 
 /* ============================================================
    INIT
