@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIFA World Cup 2026 — Base de Datos | UDLA FICA</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   VARIABLES Y RESET
+   ============================================================ */
+:root {
+  --verde:    #1a6b3c;
+  --verde-l:  #22a855;
+  --verde-xl: #4ade80;
+  --dorado:   #FFD700;
+  --dorado-d: #c9a800;
+  --blanco:   #f0f0f0;
+  --bg:       #0d0d1a;
+  --bg2:      #12122a;
+  --bg3:      #1a1a3a;
+  --gris:     #2a2a4a;
+  --gris-l:   #3a3a5a;
+  --txt:      #e0e0f0;
+  --txt-m:    #a0a0c0;
+  --azul-fk:  #60a5fa;
+  --rojo:     #ef4444;
+  --font-main: 'Poppins', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+body { font-family: var(--font-main); color: var(--txt); }
+
+/* ============================================================
+   CONTENEDOR PRINCIPAL — ratio 16:9
+   ============================================================ */
+#app {
+  width: 100vw; height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: #000;
+}
+#stage {
+  position: relative;
+  width: min(100vw, calc(100vh * 16/9));
+  height: min(100vh, calc(100vw * 9/16));
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ============================================================
+   TIMER — esquina superior derecha
+   ============================================================ */
+#timer {
+  position: absolute; top: 16px; right: 20px; z-index: 999;
+  font-family: var(--font-mono); font-size: clamp(12px, 1.6vw, 20px);
+  font-weight: 600; padding: 6px 14px; border-radius: 8px;
+  background: rgba(0,0,0,.55); border: 1px solid var(--gris-l);
+  color: var(--dorado); letter-spacing: 2px;
+  display: flex; align-items: center; gap: 8px;
+  transition: color .3s, border-color .3s;
+}
+#timer.red { color: var(--rojo); border-color: var(--rojo); animation: pulse-red 1s infinite; }
+@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:.6} }
+#timer .icon { font-size: 1em; }
+#timer-btn { cursor: pointer; background: none; border: none;
+  color: inherit; font-size: .75em; opacity: .7; margin-left: 4px; }
+#timer-btn:hover { opacity: 1; }
+
+/* ============================================================
+   BARRA DE PROGRESO + NAVEGACIÓN
+   ============================================================ */
+#progress-bar {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+  background: var(--gris); z-index: 100;
+}
+#progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--verde-l), var(--dorado));
+  transition: width .4s ease;
+}
+#nav {
+  position: absolute; bottom: 10px; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+}
+.nav-btn {
+  cursor: pointer; background: rgba(255,255,255,.07);
+  border: 1px solid var(--gris-l); color: var(--txt);
+  width: 36px; height: 36px; border-radius: 50%;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s;
+}
+.nav-btn:hover { background: var(--verde); border-color: var(--verde-l); }
+#slide-counter {
+  font-size: clamp(10px, 1.2vw, 14px); color: var(--txt-m);
+  font-weight: 500; letter-spacing: 1px; min-width: 50px; text-align: center;
+}
+.dot-nav { display: flex; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gris-l); cursor: pointer; transition: background .3s; }
+.dot.active { background: var(--dorado); }
+
+/* ============================================================
+   SLIDES
+   ============================================================ */
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: clamp(24px, 3vw, 48px) clamp(24px, 4vw, 64px) 56px;
+  opacity: 0; pointer-events: none;
+  transform: translateX(60px);
+  transition: opacity .45s ease, transform .45s ease;
+}
+.slide.active {
+  opacity: 1; pointer-events: all; transform: translateX(0);
+}
+.slide.exit {
+  opacity: 0; transform: translateX(-60px);
+}
+
+/* Decorador de fondo */
+.slide::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 80% 60% at 80% 20%, rgba(26,107,60,.18) 0%, transparent 70%),
+              radial-gradient(ellipse 50% 50% at 10% 90%, rgba(255,215,0,.07) 0%, transparent 60%);
+}
+.slide-time-badge {
+  position: absolute; top: 14px; left: 20px; z-index: 10;
+  font-size: clamp(9px,1vw,12px); color: var(--dorado);
+  background: rgba(255,215,0,.1); border: 1px solid rgba(255,215,0,.3);
+  border-radius: 20px; padding: 3px 10px; font-weight: 600;
+  letter-spacing: .5px;
+}
+
+/* ============================================================
+   TIPOGRAFÍA GENERAL
+   ============================================================ */
+.slide-title {
+  font-size: clamp(18px, 2.8vw, 38px); font-weight: 700;
+  color: var(--blanco); line-height: 1.2; margin-bottom: .4em;
+}
+.slide-subtitle {
+  font-size: clamp(12px, 1.6vw, 20px); color: var(--verde-xl);
+  font-weight: 500; margin-bottom: 1.2em;
+}
+.section-title {
+  font-size: clamp(11px, 1.4vw, 16px); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--dorado); margin-bottom: .6em;
+}
+.gold { color: var(--dorado); }
+.green { color: var(--verde-xl); }
+.muted { color: var(--txt-m); }
+
+/* ============================================================
+   SLIDE 1 — PORTADA
+   ============================================================ */
+#slide-1 {
+  align-items: center; justify-content: center; text-align: center;
+  background: radial-gradient(ellipse 120% 80% at 50% 110%, rgba(26,107,60,.35) 0%, transparent 70%),
+              var(--bg);
+}
+#slide-1 .ball-bg {
+  position: absolute; right: -5%; top: -10%;
+  width: 55%; height: 120%; opacity: .04;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='100' r='90' fill='none' stroke='white' stroke-width='4'/%3E%3Cpolygon points='100,10 135,60 115,105 85,105 65,60' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.cover-logo {
+  font-size: clamp(40px, 8vw, 100px); margin-bottom: .1em;
+  filter: drop-shadow(0 0 30px rgba(255,215,0,.4));
+}
+.cover-main-title {
+  font-size: clamp(22px, 4vw, 52px); font-weight: 800;
+  color: var(--blanco); line-height: 1.1; margin-bottom: .15em;
+  text-shadow: 0 2px 20px rgba(0,0,0,.5);
+}
+.cover-main-title span { color: var(--dorado); }
+.cover-sub {
+  font-size: clamp(12px, 1.8vw, 22px); color: var(--verde-xl);
+  font-weight: 500; margin-bottom: clamp(12px, 2.5vw, 32px);
+}
+.cover-divider {
+  width: 120px; height: 3px; margin: 0 auto clamp(12px,2vw,24px);
+  background: linear-gradient(90deg, transparent, var(--dorado), transparent);
+  border-radius: 2px;
+}
+.cover-team {
+  display: flex; gap: clamp(8px,2vw,24px); justify-content: center; flex-wrap: wrap;
+  margin-bottom: clamp(8px,1.5vw,18px);
+}
+.cover-member {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.05); border: 1px solid var(--gris-l);
+  border-radius: 40px; padding: 6px 14px;
+  font-size: clamp(10px, 1.2vw, 15px); font-weight: 500;
+}
+.cover-member .avatar {
+  width: clamp(22px,2.4vw,30px); height: clamp(22px,2.4vw,30px);
+  border-radius: 50%; background: var(--verde);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8em; font-weight: 700; color: #fff;
+}
+.cover-meta {
+  font-size: clamp(9px, 1vw, 13px); color: var(--txt-m);
+  display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+}
+.cover-meta span { display: flex; align-items: center; gap: 4px; }
+
+/* ============================================================
+   SLIDE 2 — CONTEXTUALIZACIÓN
+   ============================================================ */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(6px,1vw,14px);
+  margin-bottom: clamp(8px,1.2vw,16px);
+}
+.stat-card {
+  background: rgba(255,255,255,.04); border: 1px solid var(--gris-l);
+  border-radius: 12px; padding: clamp(8px,1.2vw,16px);
+  text-align: center; transition: border-color .3s, transform .3s;
+  opacity: 0; transform: translateY(20px);
+}
+.stat-card.visible { opacity: 1; transform: translateY(0); transition: all .5s ease; }
+.stat-card:hover { border-color: var(--verde-l); transform: translateY(-3px); }
+.stat-num {
+  font-size: clamp(20px, 3vw, 40px); font-weight: 800; color: var(--dorado);
+  display: block; line-height: 1;
+}
+.stat-label {
+  font-size: clamp(8px, .9vw, 12px); color: var(--txt-m); margin-top: 4px;
+  font-weight: 500; text-transform: uppercase; letter-spacing: .5px;
+}
+.stat-icon { font-size: clamp(14px, 2vw, 26px); margin-bottom: 4px; }
+.context-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: clamp(8px,1vw,14px);
+}
+.ctx-card {
+  background: rgba(255,255,255,.03); border: 1px solid var(--gris-l);
+  border-radius: 12px; padding: clamp(8px,1.2vw,16px);
+}
+.ctx-card h4 {
+  font-size: clamp(10px,1.1vw,14px); font-weight: 700; color: var(--verde-xl);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.ctx-card ul { list-style: none; }
+.ctx-card ul li {
+  font-size: clamp(9px,.9vw,12px); color: var(--txt-m); padding: 3px 0;
+  display: flex; align-items: flex-start; gap: 6px;
+}
+.ctx-card ul li::before { content: '›'; color: var(--verde-xl); font-weight: 700; }
+
+/* ============================================================
+   SLIDE 3 — OBJETIVO Y ALCANCE
+   ============================================================ */
+.obj-hero {
+  background: linear-gradient(135deg, rgba(26,107,60,.2), rgba(26,107,60,.05));
+  border: 1px solid rgba(34,168,85,.3); border-radius: 14px;
+  padding: clamp(10px,1.5vw,20px) clamp(14px,2vw,28px);
+  margin-bottom: clamp(8px,1.2vw,16px);
+}
+.obj-hero p { font-size: clamp(10px,1.1vw,15px); color: var(--txt); line-height: 1.6; }
+.checklist {
+  display: grid; grid-template-columns: 1fr 1fr; gap: clamp(4px,.6vw,8px);
+}
+.check-item {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,.03); border: 1px solid var(--gris-l);
+  border-radius: 10px; padding: clamp(6px,.8vw,12px);
+  font-size: clamp(9px,1vw,13px); font-weight: 500;
+  opacity: 0; transform: translateX(-20px);
+}
+.check-item.visible { opacity: 1; transform: translateX(0); transition: all .45s ease; }
+.check-icon {
+  width: clamp(20px,2.2vw,28px); height: clamp(20px,2.2vw,28px);
+  border-radius: 50%; background: var(--verde);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8em; flex-shrink: 0; color: #fff; font-weight: 700;
+}
+
+/* ============================================================
+   SLIDE 4 — DIAGRAMA ER
+   ============================================================ */
+#er-container {
+  display: flex; gap: clamp(8px,1vw,14px); flex: 1; min-height: 0;
+}
+#er-canvas-wrap {
+  flex: 1; position: relative; overflow: hidden;
+  border: 1px solid var(--gris-l); border-radius: 12px;
+  background: rgba(0,0,0,.3);
+}
+#er-canvas { width: 100%; height: 100%; }
+#er-panel {
+  width: clamp(160px,18vw,240px); background: rgba(255,255,255,.04);
+  border: 1px solid var(--gris-l); border-radius: 12px;
+  padding: clamp(8px,1vw,14px); overflow-y: auto;
+  transition: all .3s;
+}
+#er-panel h4 { font-size: clamp(10px,1.1vw,14px); color: var(--dorado); margin-bottom: 8px; font-weight: 700; }
+#er-panel p { font-size: clamp(8px,.85vw,11px); color: var(--txt-m); margin-bottom: 8px; line-height: 1.5; }
+#er-attrs { list-style: none; }
+#er-attrs li {
+  font-size: clamp(8px,.85vw,11px); padding: 3px 0;
+  border-bottom: 1px solid var(--gris); color: var(--txt);
+  display: flex; align-items: center; gap: 5px;
+}
+#er-attrs li .badge {
+  font-size: .75em; padding: 1px 5px; border-radius: 4px; font-weight: 600;
+}
+.badge-pk { background: rgba(255,215,0,.2); color: var(--dorado); }
+.badge-fk { background: rgba(96,165,250,.2); color: var(--azul-fk); }
+.er-legend {
+  display: flex; gap: 12px; font-size: clamp(8px,.85vw,11px); margin-top: 6px;
+  flex-wrap: wrap;
+}
+.er-legend span { display: flex; align-items: center; gap: 4px; }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+/* ============================================================
+   SLIDE 5 — MODELO LÓGICO
+   ============================================================ */
+#logical-wrap { display: flex; gap: clamp(8px,1vw,14px); flex: 1; min-height: 0; }
+#logical-canvas { flex: 1; border: 1px solid var(--gris-l); border-radius: 12px; background: rgba(0,0,0,.3); }
+#logical-panel {
+  width: clamp(170px,19vw,250px); background: rgba(255,255,255,.04);
+  border: 1px solid var(--gris-l); border-radius: 12px;
+  padding: clamp(8px,1vw,14px); overflow-y: auto;
+}
+.lp-field {
+  display: flex; align-items: center; gap: 6px; padding: 4px 0;
+  border-bottom: 1px solid var(--gris); font-size: clamp(8px,.85vw,11px);
+}
+.lp-field .badge { font-size: .7em; padding: 1px 5px; border-radius: 3px; font-weight: 700; }
+
+/* ============================================================
+   SLIDE 6 — MODELO FÍSICO + OBJETOS PROGRAMABLES
+   ============================================================ */
+.tabs { display: flex; gap: 4px; margin-bottom: clamp(6px,.8vw,12px); }
+.tab-btn {
+  cursor: pointer; padding: 6px 16px; border-radius: 8px;
+  font-size: clamp(9px,1vw,13px); font-weight: 600;
+  background: rgba(255,255,255,.06); border: 1px solid var(--gris-l);
+  color: var(--txt-m); transition: all .2s;
+}
+.tab-btn.active { background: var(--verde); border-color: var(--verde-l); color: #fff; }
+.tab-content { display: none; }
+.tab-content.active { display: flex; flex-direction: column; flex: 1; }
+
+.phys-table { width: 100%; border-collapse: collapse; font-size: clamp(8px,.9vw,12px); }
+.phys-table th {
+  background: rgba(26,107,60,.35); color: var(--dorado);
+  padding: 6px 10px; text-align: left; font-size: clamp(7px,.8vw,11px);
+  text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--verde);
+}
+.phys-table td { padding: 5px 10px; border-bottom: 1px solid var(--gris); color: var(--txt); }
+.phys-table tr:hover td { background: rgba(255,255,255,.04); }
+.phys-table .pk { color: var(--dorado); font-weight: 600; }
+
+.sp-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: clamp(5px,.7vw,10px); overflow-y: auto; flex: 1;
+}
+.sp-card {
+  cursor: pointer; background: rgba(255,255,255,.04);
+  border: 1px solid var(--gris-l); border-radius: 10px;
+  padding: clamp(6px,.9vw,12px); transition: all .2s;
+}
+.sp-card:hover { border-color: var(--verde-l); background: rgba(26,107,60,.12); }
+.sp-card.selected { border-color: var(--dorado); background: rgba(255,215,0,.08); }
+.sp-type {
+  font-size: clamp(7px,.75vw,10px); font-weight: 700; letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.sp-type.sp { color: var(--verde-xl); } .sp-type.vw { color: var(--azul-fk); }
+.sp-name { font-size: clamp(9px,.95vw,13px); font-weight: 600; color: var(--blanco); margin-bottom: 3px; }
+.sp-desc { font-size: clamp(7px,.8vw,11px); color: var(--txt-m); line-height: 1.4; }
+
+#sp-detail {
+  margin-top: clamp(6px,.8vw,12px); background: rgba(0,0,0,.4);
+  border: 1px solid var(--gris-l); border-radius: 10px;
+  padding: clamp(8px,1vw,14px); display: none;
+}
+#sp-detail.visible { display: block; }
+#sp-code {
+  font-family: var(--font-mono); font-size: clamp(8px,.85vw,12px);
+  color: var(--verde-xl); white-space: pre; overflow-x: auto;
+  line-height: 1.6;
+}
+#sp-code .kw { color: #c792ea; }
+#sp-code .fn { color: #82aaff; }
+#sp-code .str { color: #c3e88d; }
+#sp-code .cm { color: #546e7a; }
+
+/* ============================================================
+   SLIDE 7 — DEMO
+   ============================================================ */
+#slide-7 { background: #0a0a12; }
+.demo-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: clamp(8px,1vw,14px);
+  flex: 1; min-height: 0;
+}
+.demo-block {
+  display: flex; flex-direction: column; border: 1px solid var(--gris-l);
+  border-radius: 10px; overflow: hidden;
+}
+.demo-header {
+  background: rgba(255,255,255,.06); padding: 6px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--gris-l);
+}
+.demo-header span { font-size: clamp(8px,.9vw,12px); color: var(--txt-m); font-weight: 600; }
+.copy-btn {
+  cursor: pointer; font-size: clamp(7px,.8vw,11px);
+  background: rgba(255,255,255,.08); border: 1px solid var(--gris-l);
+  color: var(--txt-m); border-radius: 5px; padding: 2px 8px;
+  transition: all .2s; font-family: var(--font-main);
+}
+.copy-btn:hover { background: var(--verde); color: #fff; border-color: var(--verde-l); }
+.copy-btn.copied { background: var(--dorado-d); color: #000; border-color: var(--dorado); }
+.demo-sql {
+  font-family: var(--font-mono); font-size: clamp(8px,.9vw,12px);
+  padding: 8px 12px; background: rgba(0,0,0,.5);
+  color: var(--dorado); border-bottom: 1px solid var(--gris-l);
+  white-space: pre; letter-spacing: .3px;
+}
+.demo-result {
+  flex: 1; overflow-y: auto; padding: 4px;
+}
+.result-table { width: 100%; border-collapse: collapse; font-size: clamp(7px,.8vw,11px); }
+.result-table th {
+  background: rgba(26,107,60,.3); color: var(--verde-xl);
+  padding: 4px 8px; text-align: left; border-bottom: 1px solid var(--verde);
+  font-size: clamp(6px,.75vw,10px); text-transform: uppercase; letter-spacing: .5px;
+}
+.result-table td { padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,.06); color: var(--txt); }
+.result-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+/* ============================================================
+   SLIDE 8 — CONCLUSIONES
+   ============================================================ */
+.concl-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(8px,1.2vw,18px);
+  flex: 1; min-height: 0;
+}
+.concl-card {
+  border-radius: 14px; padding: clamp(12px,1.6vw,22px);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.concl-card.logros { background: linear-gradient(135deg, rgba(26,107,60,.25), rgba(26,107,60,.08)); border: 1px solid rgba(34,168,85,.4); }
+.concl-card.lecciones { background: linear-gradient(135deg, rgba(255,215,0,.12), rgba(255,215,0,.03)); border: 1px solid rgba(255,215,0,.3); }
+.concl-card.recomendaciones { background: linear-gradient(135deg, rgba(96,165,250,.12), rgba(96,165,250,.03)); border: 1px solid rgba(96,165,250,.3); }
+.concl-icon { font-size: clamp(24px,3.5vw,44px); }
+.concl-title { font-size: clamp(11px,1.3vw,17px); font-weight: 700; }
+.concl-card.logros .concl-title { color: var(--verde-xl); }
+.concl-card.lecciones .concl-title { color: var(--dorado); }
+.concl-card.recomendaciones .concl-title { color: var(--azul-fk); }
+.concl-list { list-style: none; flex: 1; }
+.concl-list li {
+  font-size: clamp(8px,.9vw,12px); color: var(--txt-m); padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: flex-start; gap: 6px; line-height: 1.4;
+}
+.concl-list li::before { font-size: 1em; flex-shrink: 0; margin-top: 1px; }
+.concl-card.logros .concl-list li::before { content: '✓'; color: var(--verde-xl); }
+.concl-card.lecciones .concl-list li::before { content: '💡'; }
+.concl-card.recomendaciones .concl-list li::before { content: '→'; color: var(--azul-fk); }
+.thanks-banner {
+  margin-top: clamp(10px,1.5vw,20px); text-align: center;
+  padding: clamp(10px,1.5vw,20px);
+  background: linear-gradient(135deg, rgba(255,215,0,.08), rgba(26,107,60,.12));
+  border: 1px solid rgba(255,215,0,.2); border-radius: 14px;
+}
+.thanks-banner h3 { font-size: clamp(14px,2vw,26px); color: var(--dorado); margin-bottom: 8px; }
+.thanks-banner p { font-size: clamp(9px,1vw,13px); color: var(--txt-m); }
+
+/* ============================================================
+   MODO PRESENTACIÓN
+   ============================================================ */
+#present-btn {
+  position: absolute; bottom: 14px; right: 16px; z-index: 200;
+  cursor: pointer; background: rgba(255,255,255,.07);
+  border: 1px solid var(--gris-l); color: var(--txt-m);
+  border-radius: 8px; padding: 4px 10px;
+  font-size: clamp(8px,.85vw,11px); font-family: var(--font-main);
+  transition: all .2s;
+}
+#present-btn:hover { background: var(--gris); color: var(--txt); }
+body.present-mode #nav,
+body.present-mode #present-btn,
+body.present-mode #progress-bar { opacity: 0; pointer-events: none; }
+body.present-mode #timer { top: 10px; right: 10px; }
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gris-l); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+<div id="stage">
+
+  <!-- TIMER -->
+  <div id="timer">
+    <span class="icon">⏱</span>
+    <span id="timer-display">15:00</span>
+    <button id="timer-btn" title="Iniciar/Pausar">▶</button>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 1 — PORTADA
+       ============================================================ -->
+  <div class="slide active" id="slide-1">
+    <div class="ball-bg"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:0;position:relative;z-index:1">
+      <div class="cover-logo">⚽</div>
+      <div class="cover-main-title">FIFA World Cup <span>2026</span></div>
+      <div class="cover-main-title" style="font-size:clamp(14px,2.4vw,32px);font-weight:600;color:var(--blanco);margin-top:-.1em">Base de Datos Relacional</div>
+      <div class="cover-sub" style="margin-top:.5em">Proyecto Integrador · Base de Datos I</div>
+      <div class="cover-divider"></div>
+      <div class="cover-team">
+        <div class="cover-member"><div class="avatar">MA</div>Matías Albuja</div>
+        <div class="cover-member"><div class="avatar">IC</div>Isaac Cordero</div>
+        <div class="cover-member"><div class="avatar">DM</div>Daniela Muñoz</div>
+      </div>
+      <div class="cover-meta">
+        <span>🎓 UDLA · FICA</span>
+        <span>👨‍🏫 Ing. Geovanni Aucancela Soliz</span>
+        <span>📅 Junio 2026</span>
+        <span>⏱ Defensa Fase 5</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 2 — CONTEXTUALIZACIÓN
+       ============================================================ -->
+  <div class="slide" id="slide-2">
+    <div class="slide-time-badge">⏱ ~2 min</div>
+    <div class="slide-title">Contextualización del Problema</div>
+    <div class="slide-subtitle">Mundial FIFA 2026 · USA · Canadá · México</div>
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-icon">🌍</div><span class="stat-num">48</span><span class="stat-label">Selecciones</span></div>
+      <div class="stat-card"><div class="stat-icon">⚽</div><span class="stat-num">72</span><span class="stat-label">Partidos</span></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><span class="stat-num">1,248</span><span class="stat-label">Jugadores</span></div>
+      <div class="stat-card"><div class="stat-icon">🏟️</div><span class="stat-num">16</span><span class="stat-label">Estadios</span></div>
+    </div>
+
+    <div class="context-grid">
+      <div class="ctx-card">
+        <h4>⚠️ El Problema</h4>
+        <ul>
+          <li>Gestión eficiente de información del torneo más grande de la historia</li>
+          <li>Primer Mundial con 48 selecciones en 12 grupos</li>
+          <li>Control de árbitros, hinchas y tabla de posiciones en tiempo real</li>
+          <li>Relaciones complejas: M:N partidos-selecciones, recursividad en árbitros</li>
+        </ul>
+      </div>
+      <div class="ctx-card">
+        <h4>🔧 Procesos Principales</h4>
+        <ul>
+          <li>Gestión de partidos y resultados oficiales</li>
+          <li>Registro de jugadores con datos reales (FIFA)</li>
+          <li>Cuartetos arbitrales con jerarquía interna</li>
+          <li>Posiciones grupales y tabla dinámica</li>
+          <li>Registro de hinchas por partido</li>
+          <li>Control de estadios por ciudad y capacidad</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 3 — OBJETIVO Y ALCANCE
+       ============================================================ -->
+  <div class="slide" id="slide-3">
+    <div class="slide-time-badge">⏱ ~2 min</div>
+    <div class="slide-title">Objetivo General y Alcance</div>
+    <div class="slide-subtitle">MundialFIFA2026 · SQL Server · 3FN</div>
+
+    <div class="obj-hero">
+      <div class="section-title">Objetivo</div>
+      <p>Diseñar e implementar una <strong style="color:var(--dorado)">base de datos relacional completa en SQL Server</strong> que modele, almacene y consulte toda la información del torneo FIFA World Cup 2026, aplicando normalización hasta Tercera Forma Normal (3FN) y objetos programables para consultas complejas.</p>
+    </div>
+
+    <div class="section-title" style="margin-bottom:8px">Alcance Implementado</div>
+    <div class="checklist" id="checklist">
+      <div class="check-item"><div class="check-icon">✓</div>12 tablas normalizadas hasta 3FN</div>
+      <div class="check-item"><div class="check-icon">✓</div>48 selecciones · 12 grupos FIFA</div>
+      <div class="check-item"><div class="check-icon">✓</div>1,248 jugadores con datos reales</div>
+      <div class="check-item"><div class="check-icon">✓</div>72 partidos con resultados oficiales</div>
+      <div class="check-item"><div class="check-icon">✓</div>Cuartetos arbitrales reales con jerarquía</div>
+      <div class="check-item"><div class="check-icon">✓</div>6 Stored Procedures + 4 Vistas</div>
+      <div class="check-item"><div class="check-icon">✓</div>Tabla de posiciones dinámica</div>
+      <div class="check-item"><div class="check-icon">✓</div>Relación M:N resuelta (Partido_Seleccion)</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 4 — MODELO ER
+       ============================================================ -->
+  <div class="slide" id="slide-4">
+    <div class="slide-time-badge">⏱ ~4 min</div>
+    <div class="slide-title">Fase 1 · Modelo Conceptual ER</div>
+    <div class="slide-subtitle">Entidades, relaciones y cardinalidades — clic en cada entidad</div>
+
+    <div id="er-container">
+      <div id="er-canvas-wrap">
+        <canvas id="er-canvas"></canvas>
+      </div>
+      <div id="er-panel">
+        <h4 id="er-panel-title">👆 Selecciona una entidad</h4>
+        <p id="er-panel-desc" style="color:var(--txt-m);font-size:clamp(8px,.85vw,11px)">Haz clic en cualquier entidad del diagrama para ver sus atributos principales.</p>
+        <ul id="er-attrs"></ul>
+      </div>
+    </div>
+    <div class="er-legend">
+      <span><div class="leg-dot" style="background:var(--verde)"></div> Entidad</span>
+      <span><div class="leg-dot" style="background:var(--dorado)"></div> Entidad débil</span>
+      <span><div class="leg-dot" style="background:rgba(255,255,255,.15);border:1px solid var(--gris-l)"></div> Relación M:N</span>
+      <span style="color:var(--txt-m)">↔ relación · ╟ cardinalidad 1 · ⊳ cardinalidad N</span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 5 — MODELO LÓGICO
+       ============================================================ -->
+  <div class="slide" id="slide-5">
+    <div class="slide-time-badge">⏱ ~4 min</div>
+    <div class="slide-title">Fase 2 · Modelo Lógico Relacional</div>
+    <div class="slide-subtitle">Notación crow's foot · PK/FK · Normalización 3FN</div>
+
+    <div id="logical-wrap">
+      <canvas id="logical-canvas"></canvas>
+      <div id="logical-panel">
+        <h4 id="lp-title" style="font-size:clamp(10px,1.1vw,14px);color:var(--dorado);margin-bottom:6px;font-weight:700">👆 Selecciona una tabla</h4>
+        <p id="lp-desc" style="font-size:clamp(8px,.85vw,11px);color:var(--txt-m);margin-bottom:8px">Haz clic en una tabla del diagrama para ver sus campos.</p>
+        <div id="lp-fields"></div>
+        <div id="lp-3fn" style="display:none;margin-top:10px;padding:8px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:8px">
+          <div style="font-size:clamp(8px,.85vw,11px);color:var(--dorado);font-weight:700;margin-bottom:4px">💡 Nota 3FN</div>
+          <div id="lp-3fn-text" style="font-size:clamp(7px,.8vw,11px);color:var(--txt-m);line-height:1.5"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 6 — MODELO FÍSICO + OBJETOS
+       ============================================================ -->
+  <div class="slide" id="slide-6">
+    <div class="slide-time-badge">⏱ ~4 min</div>
+    <div class="slide-title">Fase 3 & 4 · Modelo Físico + Objetos Programables</div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('phys')">🗄️ Modelo Físico (12 tablas)</button>
+      <button class="tab-btn" onclick="switchTab('objs')">⚙️ Objetos Programables (10)</button>
+    </div>
+
+    <!-- TAB: Modelo Físico -->
+    <div class="tab-content active" id="tab-phys" style="overflow-y:auto;flex:1">
+      <table class="phys-table">
+        <thead><tr><th>#</th><th>Tabla</th><th>PK Principal</th><th>Restricciones clave</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Pais</td><td class="pk">id_pais</td><td>UNIQUE(nombre), CHECK(continente IN (...))</td></tr>
+          <tr><td>2</td><td>Ciudad</td><td class="pk">id_ciudad</td><td>FK→Pais, UNIQUE(nombre, id_pais)</td></tr>
+          <tr><td>3</td><td>Estadio</td><td class="pk">id_estadio</td><td>FK→Ciudad, CHECK(capacidad > 0)</td></tr>
+          <tr><td>4</td><td>Fase</td><td class="pk">id_fase</td><td>UNIQUE(nombre_fase)</td></tr>
+          <tr><td>5</td><td>Grupo</td><td class="pk">id_grupo</td><td>UNIQUE(nombre_grupo), CHECK(nombre_grupo IN ('A'…'L'))</td></tr>
+          <tr><td>6</td><td>Seleccion</td><td class="pk">id_seleccion</td><td>FK→Pais, FK→Grupo, UNIQUE(nombre)</td></tr>
+          <tr><td>7</td><td>Arbitro</td><td class="pk">id_arbitro</td><td>FK→Pais, FK→Arbitro (auto-ref rol principal)</td></tr>
+          <tr><td>8</td><td>Partido</td><td class="pk">id_partido</td><td>FK→Estadio, FK→Fase, FK→Arbitro, CHECK(marcador ≥ 0)</td></tr>
+          <tr><td>9</td><td>Jugador</td><td class="pk">id_jugador</td><td>FK→Seleccion, CHECK(posicion IN (...)), CHECK(dorsal BETWEEN 1 AND 26)</td></tr>
+          <tr><td>10</td><td>Partido_Seleccion</td><td class="pk">id_partido, id_seleccion</td><td>FK→Partido, FK→Seleccion · Resuelve M:N</td></tr>
+          <tr><td>11</td><td>Hincha</td><td class="pk">id_hincha</td><td>FK→Seleccion, FK→Partido, CHECK(edad ≥ 0)</td></tr>
+          <tr><td>12</td><td>TablaPosicion</td><td class="pk">id_tabla</td><td>FK→Seleccion, FK→Grupo, UNIQUE(id_seleccion, id_grupo)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TAB: Objetos Programables -->
+    <div class="tab-content" id="tab-objs" style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <div class="sp-grid" id="sp-grid">
+        <div class="sp-card" onclick="showSP(0)"><div class="sp-type sp">STORED PROCEDURE</div><div class="sp-name">SP_PartidosPorFecha</div><div class="sp-desc">Partidos de una fecha específica con estadio y árbitro</div></div>
+        <div class="sp-card" onclick="showSP(1)"><div class="sp-type sp">STORED PROCEDURE</div><div class="sp-name">SP_ArbitrosMasDeNPartidos</div><div class="sp-desc">Árbitros que han dirigido más de N partidos</div></div>
+        <div class="sp-card" onclick="showSP(2)"><div class="sp-type sp">STORED PROCEDURE</div><div class="sp-name">SP_JugadoresPorSeleccion</div><div class="sp-desc">Plantel completo de una selección con posición y dorsal</div></div>
+        <div class="sp-card" onclick="showSP(3)"><div class="sp-type sp">STORED PROCEDURE</div><div class="sp-name">SP_CapacidadEstadiosCiudad</div><div class="sp-desc">Estadios de una ciudad con su capacidad</div></div>
+        <div class="sp-card" onclick="showSP(4)"><div class="sp-type sp">STORED PROCEDURE</div><div class="sp-name">SP_HinchasPorPartido</div><div class="sp-desc">Hinchas registrados en un partido con selección de apoyo</div></div>
+        <div class="sp-card" onclick="showSP(5)"><div class="sp-type sp">STORED PROCEDURE</div><div class="sp-name">SP_PartidosPorEquipo</div><div class="sp-desc">Todos los partidos de un equipo (local y visitante)</div></div>
+        <div class="sp-card" onclick="showSP(6)"><div class="sp-type vw">VISTA</div><div class="sp-name">VW_JugadoresPorLiga</div><div class="sp-desc">Jugadores agrupados por liga de su club</div></div>
+        <div class="sp-card" onclick="showSP(7)"><div class="sp-type vw">VISTA</div><div class="sp-name">VW_InfoFaseGrupos</div><div class="sp-desc">Información completa de la fase de grupos</div></div>
+        <div class="sp-card" onclick="showSP(8)"><div class="sp-type vw">VISTA</div><div class="sp-name">VW_TablaPosicionesGrupo</div><div class="sp-desc">Posiciones ordenadas por grupo con diferencia de goles</div></div>
+        <div class="sp-card" onclick="showSP(9)"><div class="sp-type vw">VISTA</div><div class="sp-name">VW_TablaPosicionesCompleta</div><div class="sp-desc">Tabla general de todos los grupos del torneo</div></div>
+      </div>
+      <div id="sp-detail">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span id="sp-detail-title" style="font-size:clamp(9px,1vw,13px);font-weight:700;color:var(--blanco)"></span>
+          <button onclick="document.getElementById('sp-detail').classList.remove('visible')" style="cursor:pointer;background:none;border:none;color:var(--txt-m);font-size:14px">✕</button>
+        </div>
+        <pre id="sp-code"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 7 — DEMO
+       ============================================================ -->
+  <div class="slide" id="slide-7">
+    <div class="slide-time-badge">⏱ ~4 min</div>
+    <div class="slide-title" style="color:var(--verde-xl)">Demo en Vivo</div>
+    <div class="slide-subtitle" style="color:var(--txt-m)">SQL Server · MundialFIFA2026 · Resultados Simulados</div>
+
+    <div class="demo-grid">
+
+      <!-- Demo 1 -->
+      <div class="demo-block">
+        <div class="demo-header">
+          <span>📅 Partidos por Fecha</span>
+          <button class="copy-btn" onclick="copySQL(this,'EXEC SP_PartidosPorFecha \'2026-06-11\'')">Copiar</button>
+        </div>
+        <div class="demo-sql">EXEC SP_PartidosPorFecha '2026-06-11'</div>
+        <div class="demo-result">
+          <table class="result-table">
+            <thead><tr><th>Partido</th><th>Local</th><th>Visitante</th><th>Estadio</th><th>Marcador</th></tr></thead>
+            <tbody>
+              <tr><td>#1</td><td>🇲🇽 México</td><td>🇿🇦 Sudáfrica</td><td>Estadio Azteca</td><td><strong style="color:var(--verde-xl)">2 – 0</strong></td></tr>
+              <tr><td>#2</td><td>🇨🇦 Canadá</td><td>🇳🇱 Países Bajos</td><td>BMO Field</td><td><strong style="color:var(--verde-xl)">1 – 1</strong></td></tr>
+              <tr><td>#3</td><td>🇺🇸 USA</td><td>🇸🇷 Surinam</td><td>SoFi Stadium</td><td><strong style="color:var(--verde-xl)">3 – 0</strong></td></tr>
+              <tr><td>#4</td><td>🇦🇷 Argentina</td><td>🇲🇦 Marruecos</td><td>MetLife Stadium</td><td><strong style="color:var(--verde-xl)">1 – 0</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Demo 2 -->
+      <div class="demo-block">
+        <div class="demo-header">
+          <span>⚖️ Árbitros con +3 partidos</span>
+          <button class="copy-btn" onclick="copySQL(this,'EXEC SP_ArbitrosMasDeNPartidos 3')">Copiar</button>
+        </div>
+        <div class="demo-sql">EXEC SP_ArbitrosMasDeNPartidos 3</div>
+        <div class="demo-result">
+          <table class="result-table">
+            <thead><tr><th>Árbitro</th><th>País</th><th>Rol</th><th>Partidos</th></tr></thead>
+            <tbody>
+              <tr><td>Szymon Marciniak</td><td>🇵🇱 Polonia</td><td>Principal</td><td><strong style="color:var(--dorado)">5</strong></td></tr>
+              <tr><td>Clémont Turpin</td><td>🇫🇷 Francia</td><td>Principal</td><td><strong style="color:var(--dorado)">4</strong></td></tr>
+              <tr><td>Facundo Tello</td><td>🇦🇷 Argentina</td><td>Principal</td><td><strong style="color:var(--dorado)">4</strong></td></tr>
+              <tr><td>Danny Makkelie</td><td>🇳🇱 Países Bajos</td><td>Principal</td><td><strong style="color:var(--dorado)">3</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Demo 3 -->
+      <div class="demo-block">
+        <div class="demo-header">
+          <span>🇪🇨 Jugadores de Ecuador</span>
+          <button class="copy-btn" onclick="copySQL(this,&quot;EXEC SP_JugadoresPorSeleccion 'Ecuador'&quot;)">Copiar</button>
+        </div>
+        <div class="demo-sql">EXEC SP_JugadoresPorSeleccion 'Ecuador'</div>
+        <div class="demo-result">
+          <table class="result-table">
+            <thead><tr><th>#</th><th>Jugador</th><th>Posición</th><th>Club</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Hernán Galíndez</td><td>Portero</td><td>Aucas</td></tr>
+              <tr><td>10</td><td>Moisés Caicedo</td><td>Mediocampista</td><td>Chelsea</td></tr>
+              <tr><td>11</td><td>Enner Valencia</td><td>Delantero</td><td>Internacional</td></tr>
+              <tr><td>20</td><td>Gonzalo Plata</td><td>Mediocampista</td><td>Valladolid</td></tr>
+              <tr><td>3</td><td>Piero Hincapié</td><td>Defensa</td><td>B. Leverkusen</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Demo 4 -->
+      <div class="demo-block">
+        <div class="demo-header">
+          <span>📊 Tabla Posiciones Grupo A</span>
+          <button class="copy-btn" onclick="copySQL(this,&quot;SELECT * FROM VW_TablaPosicionesGrupo WHERE Grupo = 'A'&quot;)">Copiar</button>
+        </div>
+        <div class="demo-sql">SELECT * FROM VW_TablaPosicionesGrupo
+WHERE Grupo = 'A'</div>
+        <div class="demo-result">
+          <table class="result-table">
+            <thead><tr><th>Pos</th><th>Selección</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
+            <tbody>
+              <tr><td><strong style="color:var(--dorado)">1</strong></td><td>🇲🇽 México</td><td>3</td><td>2</td><td>1</td><td>0</td><td>5</td><td>1</td><td>+4</td><td><strong style="color:var(--verde-xl)">7</strong></td></tr>
+              <tr><td>2</td><td>🇵🇱 Polonia</td><td>3</td><td>1</td><td>1</td><td>1</td><td>3</td><td>3</td><td>0</td><td><strong style="color:var(--verde-xl)">4</strong></td></tr>
+              <tr><td>3</td><td>🇸🇦 Arabia S.</td><td>3</td><td>1</td><td>0</td><td>2</td><td>2</td><td>4</td><td>-2</td><td>3</td></tr>
+              <tr><td>4</td><td>🇿🇦 Sudáfrica</td><td>3</td><td>0</td><td>2</td><td>1</td><td>1</td><td>3</td><td>-2</td><td>2</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 8 — CONCLUSIONES
+       ============================================================ -->
+  <div class="slide" id="slide-8">
+    <div class="slide-time-badge">⏱ ~1 min</div>
+    <div class="slide-title">Conclusiones y Lecciones Aprendidas</div>
+    <div class="slide-subtitle">FIFA World Cup 2026 · Base de Datos Relacional · UDLA FICA</div>
+
+    <div class="concl-grid">
+      <div class="concl-card logros">
+        <div class="concl-icon">🏆</div>
+        <div class="concl-title">Logros Alcanzados</div>
+        <ul class="concl-list">
+          <li>12 tablas normalizadas a 3FN en SQL Server</li>
+          <li>1,248 jugadores con datos reales de FIFA</li>
+          <li>72 partidos con resultados oficiales cargados</li>
+          <li>6 Stored Procedures funcionales y probados</li>
+          <li>4 Vistas para consultas complejas</li>
+          <li>Árbitros reales con auto-referencia (jerarquía)</li>
+          <li>Tabla de posiciones dinámica automática</li>
+        </ul>
+      </div>
+      <div class="concl-card lecciones">
+        <div class="concl-icon">💡</div>
+        <div class="concl-title">Lecciones Aprendidas</div>
+        <ul class="concl-list">
+          <li>La normalización 3FN evita anomalías de actualización reales</li>
+          <li>La auto-referencia modela jerarquías elegantemente</li>
+          <li>Las tablas intermedias (M:N) son fundamentales en BD deportivas</li>
+          <li>Los Stored Procedures mejoran la seguridad y reutilización</li>
+          <li>El modelo conceptual bien diseñado acelera el físico</li>
+          <li>Las restricciones CHECK mejoran la integridad de datos</li>
+        </ul>
+      </div>
+      <div class="concl-card recomendaciones">
+        <div class="concl-icon">🚀</div>
+        <div class="concl-title">Recomendaciones Futuras</div>
+        <ul class="concl-list">
+          <li>Triggers automáticos para actualizar TablaPosicion</li>
+          <li>Extender modelo a fases eliminatorias (octavos, cuartos…)</li>
+          <li>API REST sobre la BD para apps móviles</li>
+          <li>Dashboard Power BI conectado a las Vistas</li>
+          <li>Partición de tablas grandes (Jugador, Hincha) por país</li>
+          <li>Auditoría con tablas de log para cambios críticos</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="thanks-banner">
+      <h3>⚽ ¡Gracias por su atención!</h3>
+      <p>
+        <strong style="color:var(--blanco)">Matías Albuja · Isaac Cordero · Daniela Muñoz</strong><br>
+        <span style="color:var(--txt-m)">Base de Datos I · FICA · UDLA · Junio 2026 · MundialFIFA2026</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- BARRA PROGRESO -->
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+
+  <!-- NAVEGACIÓN -->
+  <div id="nav">
+    <button class="nav-btn" onclick="goSlide(-1)">◀</button>
+    <div class="dot-nav" id="dot-nav"></div>
+    <span id="slide-counter">1 / 8</span>
+    <button class="nav-btn" onclick="goSlide(1)">▶</button>
+  </div>
+
+  <button id="present-btn" onclick="togglePresentMode()">⛶ Modo presentación</button>
+
+</div><!-- /stage -->
+</div><!-- /app -->
+
+<script>
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const TOTAL = 8;
+let current = 1;
+let timerSeconds = 15 * 60;
+let timerRunning = false;
+let timerInterval = null;
+
+/* ============================================================
+   NAVEGACIÓN
+   ============================================================ */
+function goSlide(dir) {
+  const next = current + dir;
+  if (next < 1 || next > TOTAL) return;
+  const el = document.getElementById(`slide-${current}`);
+  el.classList.remove('active');
+  el.classList.add('exit');
+  setTimeout(() => el.classList.remove('exit'), 450);
+  current = next;
+  showSlide(current);
+}
+
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => {
+    s.classList.remove('active', 'exit');
+  });
+  document.getElementById(`slide-${n}`).classList.add('active');
+  current = n;
+  updateNav();
+  onSlideEnter(n);
+}
+
+function updateNav() {
+  document.getElementById('slide-counter').textContent = `${current} / ${TOTAL}`;
+  const fill = ((current - 1) / (TOTAL - 1)) * 100;
+  document.getElementById('progress-fill').style.width = fill + '%';
+  document.querySelectorAll('.dot').forEach((d, i) => {
+    d.classList.toggle('active', i + 1 === current);
+  });
+}
+
+/* Crear dots */
+(function buildDots() {
+  const nav = document.getElementById('dot-nav');
+  for (let i = 1; i <= TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => showSlide(i);
+    nav.appendChild(d);
+  }
+})();
+
+/* Teclado */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); goSlide(1); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goSlide(-1); }
+  if (e.key === 'Escape') togglePresentMode();
+});
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+const timerDisplay = document.getElementById('timer-display');
+const timerEl = document.getElementById('timer');
+const timerBtn = document.getElementById('timer-btn');
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+function updateTimerDisplay() {
+  timerDisplay.textContent = formatTime(timerSeconds);
+  timerEl.classList.toggle('red', timerSeconds <= 120);
+}
+timerBtn.addEventListener('click', () => {
+  timerRunning = !timerRunning;
+  timerBtn.textContent = timerRunning ? '⏸' : '▶';
+  if (timerRunning) {
+    timerInterval = setInterval(() => {
+      if (timerSeconds > 0) { timerSeconds--; updateTimerDisplay(); }
+      else { clearInterval(timerInterval); timerRunning = false; timerBtn.textContent = '▶'; }
+    }, 1000);
+  } else {
+    clearInterval(timerInterval);
+  }
+});
+updateTimerDisplay();
+
+/* ============================================================
+   MODO PRESENTACIÓN
+   ============================================================ */
+function togglePresentMode() {
+  document.body.classList.toggle('present-mode');
+  document.getElementById('present-btn').textContent =
+    document.body.classList.contains('present-mode') ? '⛶ Salir modo' : '⛶ Modo presentación';
+}
+
+/* ============================================================
+   ANIMACIONES POR SLIDE
+   ============================================================ */
+function onSlideEnter(n) {
+  if (n === 2) animateStats();
+  if (n === 3) animateChecklist();
+  if (n === 4) initER();
+  if (n === 5) initLogical();
+}
+
+function animateStats() {
+  document.querySelectorAll('#stats-grid .stat-card').forEach((c, i) => {
+    c.classList.remove('visible');
+    setTimeout(() => c.classList.add('visible'), i * 150);
+  });
+}
+function animateChecklist() {
+  document.querySelectorAll('#checklist .check-item').forEach((c, i) => {
+    c.classList.remove('visible');
+    setTimeout(() => c.classList.add('visible'), i * 100);
+  });
+}
+
+/* ============================================================
+   COPIAR SQL (Demo)
+   ============================================================ */
+function copySQL(btn, sql) {
+  navigator.clipboard.writeText(sql).catch(() => {});
+  const orig = btn.textContent;
+  btn.textContent = '✓ Copiado'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+}
+
+/* ============================================================
+   TABS SLIDE 6
+   ============================================================ */
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && tab === 'phys') || (i === 1 && tab === 'objs'));
+  });
+  document.getElementById('tab-phys').classList.toggle('active', tab === 'phys');
+  document.getElementById('tab-objs').classList.toggle('active', tab === 'objs');
+  if (tab === 'phys') {
+    document.getElementById('tab-phys').style.display = 'block';
+    document.getElementById('tab-objs').style.display = 'none';
+  } else {
+    document.getElementById('tab-phys').style.display = 'none';
+    document.getElementById('tab-objs').style.display = 'flex';
+  }
+}
+
+/* ============================================================
+   STORED PROCEDURES DATA
+   ============================================================ */
+const SP_DATA = [
+  {
+    name: 'SP_PartidosPorFecha', type: 'SP',
+    params: '@Fecha DATE',
+    code: `<span class="kw">CREATE PROCEDURE</span> <span class="fn">SP_PartidosPorFecha</span>
+  @Fecha <span class="kw">DATE</span>
+<span class="kw">AS BEGIN</span>
+  <span class="kw">SELECT</span>
+    p.id_partido,
+    s1.nombre <span class="kw">AS</span> Local,
+    s2.nombre <span class="kw">AS</span> Visitante,
+    e.nombre   <span class="kw">AS</span> Estadio,
+    p.fecha,   p.hora,
+    ps1.goles  <span class="kw">AS</span> Goles_Local,
+    ps2.goles  <span class="kw">AS</span> Goles_Visitante
+  <span class="kw">FROM</span> Partido p
+  <span class="kw">JOIN</span> Partido_Seleccion ps1 <span class="kw">ON</span> ps1.id_partido = p.id_partido <span class="kw">AND</span> ps1.es_local = 1
+  <span class="kw">JOIN</span> Partido_Seleccion ps2 <span class="kw">ON</span> ps2.id_partido = p.id_partido <span class="kw">AND</span> ps2.es_local = 0
+  <span class="kw">JOIN</span> Seleccion s1 <span class="kw">ON</span> s1.id_seleccion = ps1.id_seleccion
+  <span class="kw">JOIN</span> Seleccion s2 <span class="kw">ON</span> s2.id_seleccion = ps2.id_seleccion
+  <span class="kw">JOIN</span> Estadio e   <span class="kw">ON</span> e.id_estadio = p.id_estadio
+  <span class="kw">WHERE</span> p.fecha = @Fecha
+  <span class="kw">ORDER BY</span> p.hora;
+<span class="kw">END</span>`
+  },
+  {
+    name: 'SP_ArbitrosMasDeNPartidos', type: 'SP',
+    params: '@N INT = 2',
+    code: `<span class="kw">CREATE PROCEDURE</span> <span class="fn">SP_ArbitrosMasDeNPartidos</span>
+  @N <span class="kw">INT</span> = 2
+<span class="kw">AS BEGIN</span>
+  <span class="kw">SELECT</span>
+    a.nombre, a.apellido,
+    pa.nombre <span class="kw">AS</span> Pais,
+    <span class="fn">COUNT</span>(p.id_partido) <span class="kw">AS</span> TotalPartidos
+  <span class="kw">FROM</span> Arbitro a
+  <span class="kw">JOIN</span> Pais pa  <span class="kw">ON</span> pa.id_pais = a.id_pais
+  <span class="kw">JOIN</span> Partido p <span class="kw">ON</span> p.id_arbitro = a.id_arbitro
+  <span class="kw">GROUP BY</span> a.id_arbitro, a.nombre, a.apellido, pa.nombre
+  <span class="kw">HAVING</span> <span class="fn">COUNT</span>(p.id_partido) > @N
+  <span class="kw">ORDER BY</span> TotalPartidos <span class="kw">DESC</span>;
+<span class="kw">END</span>`
+  },
+  {
+    name: 'SP_JugadoresPorSeleccion', type: 'SP',
+    params: '@NombreSeleccion VARCHAR(100)',
+    code: `<span class="kw">CREATE PROCEDURE</span> <span class="fn">SP_JugadoresPorSeleccion</span>
+  @NombreSeleccion <span class="kw">VARCHAR</span>(100)
+<span class="kw">AS BEGIN</span>
+  <span class="kw">SELECT</span>
+    j.dorsal, j.nombre, j.apellido,
+    j.posicion, j.club, j.liga
+  <span class="kw">FROM</span> Jugador j
+  <span class="kw">JOIN</span> Seleccion s <span class="kw">ON</span> s.id_seleccion = j.id_seleccion
+  <span class="kw">WHERE</span> s.nombre = @NombreSeleccion
+  <span class="kw">ORDER BY</span> j.dorsal;
+<span class="kw">END</span>`
+  },
+  {
+    name: 'SP_CapacidadEstadiosCiudad', type: 'SP',
+    params: '@NombreCiudad VARCHAR(100)',
+    code: `<span class="kw">CREATE PROCEDURE</span> <span class="fn">SP_CapacidadEstadiosCiudad</span>
+  @NombreCiudad <span class="kw">VARCHAR</span>(100)
+<span class="kw">AS BEGIN</span>
+  <span class="kw">SELECT</span>
+    e.nombre <span class="kw">AS</span> Estadio,
+    e.capacidad,
+    c.nombre  <span class="kw">AS</span> Ciudad,
+    pa.nombre <span class="kw">AS</span> Pais
+  <span class="kw">FROM</span> Estadio e
+  <span class="kw">JOIN</span> Ciudad c  <span class="kw">ON</span> c.id_ciudad = e.id_ciudad
+  <span class="kw">JOIN</span> Pais pa   <span class="kw">ON</span> pa.id_pais = c.id_pais
+  <span class="kw">WHERE</span> c.nombre = @NombreCiudad
+  <span class="kw">ORDER BY</span> e.capacidad <span class="kw">DESC</span>;
+<span class="kw">END</span>`
+  },
+  {
+    name: 'SP_HinchasPorPartido', type: 'SP',
+    params: '@IdPartido INT',
+    code: `<span class="kw">CREATE PROCEDURE</span> <span class="fn">SP_HinchasPorPartido</span>
+  @IdPartido <span class="kw">INT</span>
+<span class="kw">AS BEGIN</span>
+  <span class="kw">SELECT</span>
+    h.nombre, h.apellido, h.edad,
+    s.nombre <span class="kw">AS</span> Seleccion_Apoyada,
+    pa.nombre <span class="kw">AS</span> Pais_Hincha
+  <span class="kw">FROM</span> Hincha h
+  <span class="kw">JOIN</span> Seleccion s <span class="kw">ON</span> s.id_seleccion = h.id_seleccion
+  <span class="kw">JOIN</span> Pais pa     <span class="kw">ON</span> pa.id_pais = h.id_pais
+  <span class="kw">WHERE</span> h.id_partido = @IdPartido
+  <span class="kw">ORDER BY</span> s.nombre;
+<span class="kw">END</span>`
+  },
+  {
+    name: 'SP_PartidosPorEquipo', type: 'SP',
+    params: "@NombreSeleccion VARCHAR = NULL",
+    code: `<span class="kw">CREATE PROCEDURE</span> <span class="fn">SP_PartidosPorEquipo</span>
+  @NombreSeleccion <span class="kw">VARCHAR</span>(100) = <span class="kw">NULL</span>
+<span class="kw">AS BEGIN</span>
+  <span class="kw">SELECT</span>
+    p.fecha, e.nombre <span class="kw">AS</span> Estadio,
+    s1.nombre <span class="kw">AS</span> Local,
+    s2.nombre <span class="kw">AS</span> Visitante,
+    ps1.goles, ps2.goles
+  <span class="kw">FROM</span> Partido p
+  <span class="kw">JOIN</span> Partido_Seleccion ps1 <span class="kw">ON</span> ps1.id_partido = p.id_partido <span class="kw">AND</span> ps1.es_local = 1
+  <span class="kw">JOIN</span> Partido_Seleccion ps2 <span class="kw">ON</span> ps2.id_partido = p.id_partido <span class="kw">AND</span> ps2.es_local = 0
+  <span class="kw">JOIN</span> Seleccion s1 <span class="kw">ON</span> s1.id_seleccion = ps1.id_seleccion
+  <span class="kw">JOIN</span> Seleccion s2 <span class="kw">ON</span> s2.id_seleccion = ps2.id_seleccion
+  <span class="kw">JOIN</span> Estadio e   <span class="kw">ON</span> e.id_estadio = p.id_estadio
+  <span class="kw">WHERE</span> @NombreSeleccion <span class="kw">IS NULL</span>
+     <span class="kw">OR</span> s1.nombre = @NombreSeleccion
+     <span class="kw">OR</span> s2.nombre = @NombreSeleccion;
+<span class="kw">END</span>`
+  },
+  {
+    name: 'VW_JugadoresPorLiga', type: 'VW',
+    params: '— sin parámetros',
+    code: `<span class="kw">CREATE VIEW</span> <span class="fn">VW_JugadoresPorLiga</span> <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  j.liga,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> Total_Jugadores,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> j.id_seleccion) <span class="kw">AS</span> Selecciones
+<span class="kw">FROM</span> Jugador j
+<span class="kw">GROUP BY</span> j.liga
+<span class="kw">ORDER BY</span> Total_Jugadores <span class="kw">DESC</span>;`
+  },
+  {
+    name: 'VW_InfoFaseGrupos', type: 'VW',
+    params: '— sin parámetros',
+    code: `<span class="kw">CREATE VIEW</span> <span class="fn">VW_InfoFaseGrupos</span> <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  g.nombre_grupo <span class="kw">AS</span> Grupo,
+  s.nombre       <span class="kw">AS</span> Seleccion,
+  pa.nombre      <span class="kw">AS</span> Pais,
+  pa.continente
+<span class="kw">FROM</span> Grupo g
+<span class="kw">JOIN</span> Seleccion s <span class="kw">ON</span> s.id_grupo = g.id_grupo
+<span class="kw">JOIN</span> Pais pa     <span class="kw">ON</span> pa.id_pais = s.id_pais
+<span class="kw">ORDER BY</span> g.nombre_grupo, s.nombre;`
+  },
+  {
+    name: 'VW_TablaPosicionesGrupo', type: 'VW',
+    params: 'Filtrar: WHERE Grupo = \'A\'',
+    code: `<span class="kw">CREATE VIEW</span> <span class="fn">VW_TablaPosicionesGrupo</span> <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  g.nombre_grupo <span class="kw">AS</span> Grupo,
+  s.nombre       <span class="kw">AS</span> Seleccion,
+  tp.partidos_jugados <span class="kw">AS</span> PJ,
+  tp.partidos_ganados <span class="kw">AS</span> G,
+  tp.partidos_empatados <span class="kw">AS</span> E,
+  tp.partidos_perdidos <span class="kw">AS</span> P,
+  tp.goles_favor     <span class="kw">AS</span> GF,
+  tp.goles_contra    <span class="kw">AS</span> GC,
+  (tp.goles_favor - tp.goles_contra) <span class="kw">AS</span> DG,
+  tp.puntos
+<span class="kw">FROM</span> TablaPosicion tp
+<span class="kw">JOIN</span> Seleccion s <span class="kw">ON</span> s.id_seleccion = tp.id_seleccion
+<span class="kw">JOIN</span> Grupo g     <span class="kw">ON</span> g.id_grupo = tp.id_grupo
+<span class="kw">ORDER BY</span> g.nombre_grupo, tp.puntos <span class="kw">DESC</span>, DG <span class="kw">DESC</span>;`
+  },
+  {
+    name: 'VW_TablaPosicionesCompleta', type: 'VW',
+    params: '— todos los grupos',
+    code: `<span class="kw">CREATE VIEW</span> <span class="fn">VW_TablaPosicionesCompleta</span> <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  g.nombre_grupo <span class="kw">AS</span> Grupo,
+  <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> g.id_grupo
+    <span class="kw">ORDER BY</span> tp.puntos <span class="kw">DESC</span>,
+             (tp.goles_favor - tp.goles_contra) <span class="kw">DESC</span>
+  ) <span class="kw">AS</span> Posicion,
+  s.nombre   <span class="kw">AS</span> Seleccion,
+  tp.puntos, tp.partidos_jugados <span class="kw">AS</span> PJ
+<span class="kw">FROM</span> TablaPosicion tp
+<span class="kw">JOIN</span> Seleccion s <span class="kw">ON</span> s.id_seleccion = tp.id_seleccion
+<span class="kw">JOIN</span> Grupo g     <span class="kw">ON</span> g.id_grupo = tp.id_grupo;`
+  }
+];
+
+function showSP(idx) {
+  document.querySelectorAll('.sp-card').forEach((c, i) => c.classList.toggle('selected', i === idx));
+  const sp = SP_DATA[idx];
+  document.getElementById('sp-detail-title').textContent = `${sp.type === 'SP' ? '⚙️' : '👁️'} ${sp.name}  ·  ${sp.params}`;
+  document.getElementById('sp-code').innerHTML = sp.code;
+  document.getElementById('sp-detail').classList.add('visible');
+}
+
+/* ============================================================
+   DIAGRAMA ER — Canvas
+   ============================================================ */
+const ER_ENTITIES = [
+  { id: 'Pais',             x:.08, y:.12, w:.14, h:.09, color:'#1a6b3c',
+    attrs:[{n:'id_pais',t:'PK'},{n:'nombre',t:''},{n:'continente',t:''},{n:'codigo_fifa',t:''}],
+    desc:'País participante o sede. Base geográfica del modelo.' },
+  { id: 'Ciudad',           x:.08, y:.35, w:.14, h:.09, color:'#1a6b3c',
+    attrs:[{n:'id_ciudad',t:'PK'},{n:'nombre',t:''},{n:'id_pais',t:'FK'}],
+    desc:'Ciudad sede de estadios. Dependiente de País.' },
+  { id: 'Estadio',          x:.08, y:.58, w:.14, h:.09, color:'#1a6b3c',
+    attrs:[{n:'id_estadio',t:'PK'},{n:'nombre',t:''},{n:'capacidad',t:''},{n:'id_ciudad',t:'FK'}],
+    desc:'Estadio donde se juegan los partidos. Capacidad sujeta a CHECK > 0.' },
+  { id: 'Fase',             x:.30, y:.04, w:.13, h:.09, color:'#0f4d6b',
+    attrs:[{n:'id_fase',t:'PK'},{n:'nombre_fase',t:''},{n:'descripcion',t:''}],
+    desc:'Etapas del torneo: Grupos, Octavos, Cuartos, Semis, Final.' },
+  { id: 'Grupo',            x:.30, y:.22, w:.13, h:.09, color:'#0f4d6b',
+    attrs:[{n:'id_grupo',t:'PK'},{n:'nombre_grupo',t:''},{n:'id_fase',t:'FK'}],
+    desc:'Grupo de la fase de grupos (A–L). 4 selecciones por grupo.' },
+  { id: 'Seleccion',        x:.30, y:.44, w:.14, h:.09, color:'#1a6b3c',
+    attrs:[{n:'id_seleccion',t:'PK'},{n:'nombre',t:''},{n:'id_pais',t:'FK'},{n:'id_grupo',t:'FK'}],
+    desc:'Selección nacional. Vinculada a su país y su grupo FIFA.' },
+  { id: 'Arbitro',          x:.55, y:.04, w:.14, h:.09, color:'#6b3c1a',
+    attrs:[{n:'id_arbitro',t:'PK'},{n:'nombre',t:''},{n:'id_pais',t:'FK'},{n:'id_arbitro_principal',t:'FK auto-ref'}],
+    desc:'Árbitro con auto-referencia para jerarquía: Principal → Asistentes.' },
+  { id: 'Partido',          x:.55, y:.28, w:.14, h:.09, color:'#1a6b3c',
+    attrs:[{n:'id_partido',t:'PK'},{n:'fecha',t:''},{n:'hora',t:''},{n:'id_estadio',t:'FK'},{n:'id_fase',t:'FK'},{n:'id_arbitro',t:'FK'}],
+    desc:'Partido con fecha, estadio, árbitro y fase. Centro del modelo.' },
+  { id: 'Jugador',          x:.30, y:.66, w:.14, h:.09, color:'#1a6b3c',
+    attrs:[{n:'id_jugador',t:'PK'},{n:'nombre',t:''},{n:'dorsal',t:''},{n:'posicion',t:''},{n:'id_seleccion',t:'FK'}],
+    desc:'Jugador con dorsal 1-26, posición validada con CHECK.' },
+  { id: 'Partido_Seleccion',x:.55, y:.50, w:.15, h:.09, color:'#4d1a6b',
+    attrs:[{n:'id_partido',t:'PK FK'},{n:'id_seleccion',t:'PK FK'},{n:'es_local',t:''},{n:'goles',t:''}],
+    desc:'Tabla intermedia que resuelve la relación M:N entre Partido y Selección. Almacena goles y condición local/visitante.' },
+  { id: 'Hincha',           x:.55, y:.72, w:.13, h:.09, color:'#6b1a3c',
+    attrs:[{n:'id_hincha',t:'PK'},{n:'nombre',t:''},{n:'edad',t:''},{n:'id_seleccion',t:'FK'},{n:'id_partido',t:'FK'}],
+    desc:'Hincha registrado en un partido. Edad con CHECK ≥ 0.' },
+  { id: 'TablaPosicion',    x:.78, y:.44, w:.15, h:.09, color:'#1a3c6b',
+    attrs:[{n:'id_tabla',t:'PK'},{n:'id_seleccion',t:'FK'},{n:'id_grupo',t:'FK'},{n:'puntos',t:''},{n:'goles_favor',t:''},{n:'goles_contra',t:''}],
+    desc:'Evita cálculo redundante almacenando la posición de cada selección en su grupo.' }
+];
+
+const ER_RELATIONS = [
+  ['Pais','Ciudad','1','N'], ['Ciudad','Estadio','1','N'],
+  ['Estadio','Partido','1','N'], ['Fase','Partido','1','N'],
+  ['Fase','Grupo','1','N'], ['Grupo','Seleccion','1','N'],
+  ['Pais','Seleccion','1','1'], ['Pais','Arbitro','1','N'],
+  ['Arbitro','Partido','1','N'], ['Seleccion','Jugador','1','N'],
+  ['Partido','Partido_Seleccion','1','N'], ['Seleccion','Partido_Seleccion','1','N'],
+  ['Seleccion','Hincha','1','N'], ['Partido','Hincha','1','N'],
+  ['Seleccion','TablaPosicion','1','1'], ['Grupo','TablaPosicion','1','N'],
+  ['Arbitro','Arbitro','1','N'] // auto-ref
+];
+
+let erCanvas, erCtx, erInitialized = false;
+function initER() {
+  if (erInitialized) return;
+  erCanvas = document.getElementById('er-canvas');
+  const wrap = document.getElementById('er-canvas-wrap');
+  erCanvas.width = wrap.clientWidth;
+  erCanvas.height = wrap.clientHeight;
+  erCtx = erCanvas.getContext('2d');
+  erInitialized = true;
+  drawER();
+  erCanvas.addEventListener('click', erClick);
+}
+
+function erPos(e) {
+  const w = erCanvas.width, h = erCanvas.height;
+  return { x: e.x * w, y: e.y * h, w: e.w * w, h: e.h * h };
+}
+
+function drawER() {
+  const w = erCanvas.width, h = erCanvas.height;
+  erCtx.clearRect(0, 0, w, h);
+
+  // Relaciones
+  erCtx.save();
+  ER_RELATIONS.forEach(([a, b, ca, cb]) => {
+    const ea = ER_ENTITIES.find(e => e.id === a);
+    const eb = ER_ENTITIES.find(e => e.id === b);
+    if (!ea || !eb) return;
+    const pa = erPos(ea), pb = erPos(eb);
+    const ax = pa.x + pa.w/2, ay = pa.y + pa.h/2;
+    const bx = pb.x + pb.w/2, by = pb.y + pb.h/2;
+    const isAutoRef = a === b;
+    erCtx.beginPath();
+    erCtx.strokeStyle = 'rgba(100,120,160,.55)';
+    erCtx.lineWidth = 1.5;
+    if (isAutoRef) {
+      erCtx.arc(ax + pa.w*.7, ay - pa.h*.8, pa.h*.7, 0, Math.PI*1.5);
+    } else {
+      erCtx.moveTo(ax, ay); erCtx.lineTo(bx, by);
+    }
+    erCtx.stroke();
+    // cardinalidad
+    erCtx.fillStyle = '#a0c0ff'; erCtx.font = `bold ${Math.floor(h*.022)}px Inter`;
+    erCtx.textAlign = 'center'; erCtx.textBaseline = 'middle';
+    if (!isAutoRef) {
+      const mx = (ax+bx)/2, my = (ay+by)/2;
+      erCtx.fillText(`${ca}:${cb}`, mx, my - 8);
+    }
+  });
+  erCtx.restore();
+
+  // Entidades
+  ER_ENTITIES.forEach(e => {
+    const p = erPos(e);
+    erCtx.save();
+    const grad = erCtx.createLinearGradient(p.x, p.y, p.x, p.y+p.h);
+    grad.addColorStop(0, e.color + 'ee');
+    grad.addColorStop(1, e.color + '88');
+    erCtx.fillStyle = grad;
+    erCtx.strokeStyle = e.color === '#4d1a6b' ? '#b060ff' : (e.color === '#1a3c6b' ? '#60a5fa' : '#22a855');
+    erCtx.lineWidth = 2;
+    roundRect(erCtx, p.x, p.y, p.w, p.h, 8);
+    erCtx.fill(); erCtx.stroke();
+    // texto
+    erCtx.fillStyle = '#ffffff';
+    erCtx.font = `bold ${Math.floor(h*.025)}px Poppins`;
+    erCtx.textAlign = 'center'; erCtx.textBaseline = 'middle';
+    erCtx.fillText(e.id, p.x + p.w/2, p.y + p.h/2);
+    erCtx.restore();
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function erClick(e) {
+  const rect = erCanvas.getBoundingClientRect();
+  const scaleX = erCanvas.width / rect.width;
+  const scaleY = erCanvas.height / rect.height;
+  const cx = (e.clientX - rect.left) * scaleX;
+  const cy = (e.clientY - rect.top) * scaleY;
+  ER_ENTITIES.forEach(ent => {
+    const p = erPos(ent);
+    if (cx >= p.x && cx <= p.x+p.w && cy >= p.y && cy <= p.y+p.h) {
+      // Highlight
+      erCtx.save();
+      erCtx.strokeStyle = '#FFD700';
+      erCtx.lineWidth = 3;
+      roundRect(erCtx, p.x-2, p.y-2, p.w+4, p.h+4, 10);
+      erCtx.stroke();
+      erCtx.restore();
+      // Panel
+      document.getElementById('er-panel-title').textContent = '📋 ' + ent.id;
+      document.getElementById('er-panel-desc').textContent = ent.desc;
+      const ul = document.getElementById('er-attrs');
+      ul.innerHTML = ent.attrs.map(a => {
+        const badges = a.t.split(' ').map(t => t ? `<span class="badge badge-${t.toLowerCase().replace(' ','')}">${t}</span>` : '').join('');
+        return `<li>${badges} ${a.n}</li>`;
+      }).join('');
+      setTimeout(() => drawER(), 1200);
+    }
+  });
+}
+
+/* ============================================================
+   DIAGRAMA LÓGICO — Canvas (crow's foot simplificado)
+   ============================================================ */
+const LG_TABLES = [
+  { id:'Pais',             x:.03, y:.05, w:.13, h:.20,
+    fields:[{n:'id_pais',t:'PK'},{n:'nombre',t:''},{n:'continente',t:''},{n:'codigo_fifa',t:''}],
+    fn3:'Atributos independientes, sin dependencias transitivas.' },
+  { id:'Ciudad',           x:.03, y:.38, w:.13, h:.16,
+    fields:[{n:'id_ciudad',t:'PK'},{n:'nombre',t:''},{n:'id_pais',t:'FK'}],
+    fn3:'FK hacia Pais. Nombre de ciudad no depende del país.' },
+  { id:'Estadio',          x:.03, y:.68, w:.13, h:.20,
+    fields:[{n:'id_estadio',t:'PK'},{n:'nombre',t:''},{n:'capacidad',t:''},{n:'id_ciudad',t:'FK'}],
+    fn3:'Sin dependencias transitivas. Capacidad es atributo propio.' },
+  { id:'Fase',             x:.22, y:.03, w:.13, h:.16,
+    fields:[{n:'id_fase',t:'PK'},{n:'nombre_fase',t:''},{n:'descripcion',t:''}],
+    fn3:'Tabla simple. Nombre de fase no depende de otro atributo.' },
+  { id:'Grupo',            x:.22, y:.28, w:.13, h:.16,
+    fields:[{n:'id_grupo',t:'PK'},{n:'nombre_grupo',t:''},{n:'id_fase',t:'FK'}],
+    fn3:'FK hacia Fase. Nombre del grupo (A-L) no depende de la fase.' },
+  { id:'Seleccion',        x:.22, y:.55, w:.14, h:.22,
+    fields:[{n:'id_seleccion',t:'PK'},{n:'nombre',t:''},{n:'entrenador',t:''},{n:'id_pais',t:'FK'},{n:'id_grupo',t:'FK'}],
+    fn3:'Entrenador depende solo de la selección, no del país ni grupo.' },
+  { id:'Arbitro',          x:.42, y:.03, w:.14, h:.22,
+    fields:[{n:'id_arbitro',t:'PK'},{n:'nombre',t:''},{n:'apellido',t:''},{n:'id_pais',t:'FK'},{n:'id_arb_principal',t:'FK auto-ref'}],
+    fn3:'Auto-referencia modela la jerarquía de cuarteto sin duplicar datos.' },
+  { id:'Partido',          x:.42, y:.40, w:.14, h:.26,
+    fields:[{n:'id_partido',t:'PK'},{n:'fecha',t:''},{n:'hora',t:''},{n:'id_estadio',t:'FK'},{n:'id_fase',t:'FK'},{n:'id_arbitro',t:'FK'}],
+    fn3:'Centro del modelo. Cada FK es independiente — no hay dependencias transitivas.' },
+  { id:'Jugador',          x:.61, y:.03, w:.13, h:.26,
+    fields:[{n:'id_jugador',t:'PK'},{n:'nombre',t:''},{n:'dorsal',t:''},{n:'posicion',t:''},{n:'club',t:''},{n:'liga',t:''},{n:'id_seleccion',t:'FK'}],
+    fn3:'Liga podría depender del club — riesgo 2FN si liga se normaliza en tabla Club.' },
+  { id:'Partido_Seleccion',x:.61, y:.42, w:.15, h:.20,
+    fields:[{n:'id_partido',t:'PK FK'},{n:'id_seleccion',t:'PK FK'},{n:'es_local',t:''},{n:'goles',t:''}],
+    fn3:'Resuelve M:N Partido↔Seleccion. Clave compuesta; goles y es_local dependen de ambas claves.' },
+  { id:'Hincha',           x:.61, y:.72, w:.13, h:.22,
+    fields:[{n:'id_hincha',t:'PK'},{n:'nombre',t:''},{n:'edad',t:''},{n:'id_seleccion',t:'FK'},{n:'id_partido',t:'FK'}],
+    fn3:'Edad del hincha depende solo del hincha, no del partido.' },
+  { id:'TablaPosicion',    x:.80, y:.30, w:.14, h:.36,
+    fields:[{n:'id_tabla',t:'PK'},{n:'id_seleccion',t:'FK'},{n:'id_grupo',t:'FK'},{n:'puntos',t:''},{n:'partidos_jugados',t:''},{n:'partidos_ganados',t:''},{n:'goles_favor',t:''},{n:'goles_contra',t:''}],
+    fn3:'Evita cálculo redundante. Los puntos y estadísticas dependen funcionalmente de (seleccion, grupo).' }
+];
+
+const LG_RELATIONS = [
+  ['Pais','Ciudad'], ['Ciudad','Estadio'], ['Estadio','Partido'],
+  ['Fase','Partido'], ['Fase','Grupo'], ['Grupo','Seleccion'],
+  ['Pais','Seleccion'], ['Pais','Arbitro'],
+  ['Arbitro','Partido'], ['Seleccion','Jugador'],
+  ['Partido','Partido_Seleccion'], ['Seleccion','Partido_Seleccion'],
+  ['Seleccion','Hincha'], ['Partido','Hincha'],
+  ['Seleccion','TablaPosicion'], ['Grupo','TablaPosicion']
+];
+
+let lgCanvas, lgCtx, lgInitialized = false;
+function initLogical() {
+  if (lgInitialized) return;
+  lgCanvas = document.getElementById('logical-canvas');
+  lgCanvas.width = lgCanvas.parentElement.clientWidth - (document.getElementById('logical-panel').offsetWidth + 14);
+  lgCanvas.height = lgCanvas.parentElement.clientHeight;
+  lgCtx = lgCanvas.getContext('2d');
+  lgInitialized = true;
+  drawLogical();
+  lgCanvas.addEventListener('click', lgClick);
+}
+
+function lgPos(t) {
+  const w = lgCanvas.width, h = lgCanvas.height;
+  return { x: t.x*w, y: t.y*h, w: t.w*w, h: t.h*h };
+}
+
+function drawLogical() {
+  const w = lgCanvas.width, h = lgCanvas.height;
+  lgCtx.clearRect(0, 0, w, h);
+
+  // Relaciones (líneas)
+  lgCtx.save();
+  LG_RELATIONS.forEach(([a, b]) => {
+    const ta = LG_TABLES.find(t => t.id === a);
+    const tb = LG_TABLES.find(t => t.id === b);
+    if (!ta || !tb) return;
+    const pa = lgPos(ta), pb = lgPos(tb);
+    const ax = pa.x + pa.w/2, ay = pa.y + pa.h/2;
+    const bx = pb.x + pb.w/2, by = pb.y + pb.h/2;
+    lgCtx.beginPath();
+    lgCtx.strokeStyle = 'rgba(96,165,250,.35)';
+    lgCtx.lineWidth = 1.5;
+    lgCtx.setLineDash([4,3]);
+    lgCtx.moveTo(ax, ay); lgCtx.lineTo(bx, by);
+    lgCtx.stroke();
+    lgCtx.setLineDash([]);
+  });
+  lgCtx.restore();
+
+  // Tablas
+  LG_TABLES.forEach(t => {
+    const p = lgPos(t);
+    lgCtx.save();
+    // Sombra
+    lgCtx.shadowColor = 'rgba(0,0,0,.5)'; lgCtx.shadowBlur = 8;
+    // Header
+    lgCtx.fillStyle = '#1a3a2a';
+    lgCtx.strokeStyle = '#22a855';
+    lgCtx.lineWidth = 1.5;
+    roundRect(lgCtx, p.x, p.y, p.w, p.h, 6);
+    lgCtx.fill(); lgCtx.stroke();
+    lgCtx.shadowBlur = 0;
+    // Header bar
+    const hh = p.h * .28;
+    lgCtx.fillStyle = '#1a6b3c';
+    lgCtx.beginPath();
+    lgCtx.moveTo(p.x+6, p.y); lgCtx.lineTo(p.x+p.w-6, p.y);
+    lgCtx.quadraticCurveTo(p.x+p.w, p.y, p.x+p.w, p.y+6);
+    lgCtx.lineTo(p.x+p.w, p.y+hh);
+    lgCtx.lineTo(p.x, p.y+hh);
+    lgCtx.lineTo(p.x, p.y+6);
+    lgCtx.quadraticCurveTo(p.x, p.y, p.x+6, p.y);
+    lgCtx.fill();
+    // Nombre tabla
+    lgCtx.fillStyle = '#fff';
+    lgCtx.font = `bold ${Math.max(7, Math.floor(h*.016))}px Poppins`;
+    lgCtx.textAlign = 'center'; lgCtx.textBaseline = 'middle';
+    lgCtx.fillText(t.id, p.x+p.w/2, p.y+hh/2);
+    // Campos
+    const fh = (p.h - hh) / Math.max(t.fields.length, 1);
+    t.fields.forEach((f, i) => {
+      const fy = p.y + hh + i*fh + fh/2;
+      lgCtx.font = `${Math.max(6, Math.floor(h*.013))}px JetBrains Mono, monospace`;
+      lgCtx.textAlign = 'left'; lgCtx.textBaseline = 'middle';
+      lgCtx.fillStyle = f.t.includes('PK') ? '#FFD700' : (f.t.includes('FK') ? '#60a5fa' : '#c0d0e0');
+      lgCtx.fillText((f.t.includes('PK')?'🔑 ':'') + (f.t.includes('FK')&&!f.t.includes('PK')?'🔗 ':'') + f.n, p.x+5, fy);
+    });
+    lgCtx.restore();
+  });
+}
+
+function lgClick(e) {
+  const rect = lgCanvas.getBoundingClientRect();
+  const scaleX = lgCanvas.width / rect.width;
+  const scaleY = lgCanvas.height / rect.height;
+  const cx = (e.clientX - rect.left) * scaleX;
+  const cy = (e.clientY - rect.top) * scaleY;
+  LG_TABLES.forEach(t => {
+    const p = lgPos(t);
+    if (cx >= p.x && cx <= p.x+p.w && cy >= p.y && cy <= p.y+p.h) {
+      // Highlight
+      drawLogical();
+      lgCtx.save();
+      lgCtx.strokeStyle = '#FFD700'; lgCtx.lineWidth = 3;
+      roundRect(lgCtx, p.x-2, p.y-2, p.w+4, p.h+4, 8);
+      lgCtx.stroke(); lgCtx.restore();
+      // Panel
+      document.getElementById('lp-title').textContent = '📋 ' + t.id;
+      document.getElementById('lp-desc').textContent = '';
+      const div = document.getElementById('lp-fields');
+      div.innerHTML = t.fields.map(f => {
+        const isPK = f.t.includes('PK'), isFK = f.t.includes('FK');
+        const badge = isPK ? '<span class="badge badge-pk">PK</span>' : (isFK ? '<span class="badge badge-fk">FK</span>' : '');
+        return `<div class="lp-field">${badge}<span style="font-family:var(--font-mono);font-size:clamp(7px,.8vw,10px)">${f.n}</span></div>`;
+      }).join('');
+      const fn3div = document.getElementById('lp-3fn');
+      fn3div.style.display = 'block';
+      document.getElementById('lp-3fn-text').textContent = t.fn3;
+      setTimeout(() => drawLogical(), 1500);
+    }
+  });
+}
+
+/* ============================================================
+   RESIZE
+   ============================================================ */
+window.addEventListener('resize', () => {
+  erInitialized = false; lgInitialized = false;
+  if (current === 4) initER();
+  if (current === 5) initLogical();
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+updateNav();
+</script>
+</body>
+</html>
