@@ -577,6 +577,7 @@ body.present-mode #timer { top: 10px; right: 10px; }
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('phys')">🗄️ Modelo Físico (12 tablas)</button>
+      <button class="tab-btn" onclick="switchTab('img')">🖼️ Diagrama Físico</button>
       <button class="tab-btn" onclick="switchTab('objs')">⚙️ Objetos Programables (10)</button>
     </div>
 
@@ -599,6 +600,11 @@ body.present-mode #timer { top: 10px; right: 10px; }
           <tr><td>12</td><td>TablaPosicion</td><td class="pk">id_tabla</td><td>FK→Seleccion, FK→Grupo, UNIQUE(id_seleccion, id_grupo)</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- TAB: Diagrama Físico -->
+    <div class="tab-content" id="tab-img" style="flex:1;min-height:0;display:none;align-items:center;justify-content:center;overflow:hidden">
+      <img src="Imagenes/ModeloFisico.jpeg" alt="Diagrama Modelo Físico" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;">
     </div>
 
     <!-- TAB: Objetos Programables -->
@@ -928,18 +934,13 @@ function copySQL(btn, sql) {
    TABS SLIDE 6
    ============================================================ */
 function switchTab(tab) {
+  const tabs = ['phys', 'img', 'objs'];
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', (i === 0 && tab === 'phys') || (i === 1 && tab === 'objs'));
+    b.classList.toggle('active', tabs[i] === tab);
   });
-  document.getElementById('tab-phys').classList.toggle('active', tab === 'phys');
-  document.getElementById('tab-objs').classList.toggle('active', tab === 'objs');
-  if (tab === 'phys') {
-    document.getElementById('tab-phys').style.display = 'block';
-    document.getElementById('tab-objs').style.display = 'none';
-  } else {
-    document.getElementById('tab-phys').style.display = 'none';
-    document.getElementById('tab-objs').style.display = 'flex';
-  }
+  document.getElementById('tab-phys').style.display = tab === 'phys' ? 'block' : 'none';
+  document.getElementById('tab-img').style.display  = tab === 'img'  ? 'flex'  : 'none';
+  document.getElementById('tab-objs').style.display = tab === 'objs' ? 'flex'  : 'none';
 }
 
 /* ============================================================
