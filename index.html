@@ -49,25 +49,6 @@ body { font-family: var(--font-main); color: var(--txt); }
 }
 
 /* ============================================================
-   TIMER — esquina superior derecha
-   ============================================================ */
-#timer {
-  position: absolute; top: 16px; right: 20px; z-index: 999;
-  font-family: var(--font-mono); font-size: clamp(12px, 1.6vw, 20px);
-  font-weight: 600; padding: 6px 14px; border-radius: 8px;
-  background: rgba(0,0,0,.55); border: 1px solid var(--gris-l);
-  color: var(--dorado); letter-spacing: 2px;
-  display: flex; align-items: center; gap: 8px;
-  transition: color .3s, border-color .3s;
-}
-#timer.red { color: var(--rojo); border-color: var(--rojo); animation: pulse-red 1s infinite; }
-@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:.6} }
-#timer .icon { font-size: 1em; }
-#timer-btn { cursor: pointer; background: none; border: none;
-  color: inherit; font-size: .75em; opacity: .7; margin-left: 4px; }
-#timer-btn:hover { opacity: 1; }
-
-/* ============================================================
    BARRA DE PROGRESO + NAVEGACIÓN
    ============================================================ */
 #progress-bar {
@@ -122,13 +103,6 @@ body { font-family: var(--font-main); color: var(--txt); }
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(ellipse 80% 60% at 80% 20%, rgba(26,107,60,.18) 0%, transparent 70%),
               radial-gradient(ellipse 50% 50% at 10% 90%, rgba(255,215,0,.07) 0%, transparent 60%);
-}
-.slide-time-badge {
-  position: absolute; top: 14px; left: 20px; z-index: 10;
-  font-size: clamp(9px,1vw,12px); color: var(--dorado);
-  background: rgba(255,215,0,.1); border: 1px solid rgba(255,215,0,.3);
-  border-radius: 20px; padding: 3px 10px; font-weight: 600;
-  letter-spacing: .5px;
 }
 
 /* ============================================================
@@ -432,7 +406,6 @@ body { font-family: var(--font-main); color: var(--txt); }
 body.present-mode #nav,
 body.present-mode #present-btn,
 body.present-mode #progress-bar { opacity: 0; pointer-events: none; }
-body.present-mode #timer { top: 10px; right: 10px; }
 
 /* ============================================================
    SCROLLBAR
@@ -446,13 +419,6 @@ body.present-mode #timer { top: 10px; right: 10px; }
 
 <div id="app">
 <div id="stage">
-
-  <!-- TIMER -->
-  <div id="timer">
-    <span class="icon">⏱</span>
-    <span id="timer-display">15:00</span>
-    <button id="timer-btn" title="Iniciar/Pausar">▶</button>
-  </div>
 
   <!-- ============================================================
        SLIDE 1 — PORTADA
@@ -483,7 +449,6 @@ body.present-mode #timer { top: 10px; right: 10px; }
        SLIDE 2 — CONTEXTUALIZACIÓN
        ============================================================ -->
   <div class="slide" id="slide-2">
-    <div class="slide-time-badge">⏱ ~2 min</div>
     <div class="slide-title">Contextualización del Problema</div>
     <div class="slide-subtitle">Mundial FIFA 2026 · USA · Canadá · México</div>
 
@@ -498,10 +463,11 @@ body.present-mode #timer { top: 10px; right: 10px; }
       <div class="ctx-card">
         <h4>⚠️ El Problema</h4>
         <ul>
-          <li>Gestión eficiente de información del torneo más grande de la historia</li>
-          <li>Primer Mundial con 48 selecciones en 12 grupos</li>
-          <li>Control de árbitros, hinchas y tabla de posiciones en tiempo real</li>
-          <li>Relaciones complejas: M:N partidos-selecciones, recursividad en árbitros</li>
+          <li>¿Cómo gestionar <strong style="color:var(--dorado)">104 partidos, 48 selecciones y 1.248 jugadores</strong> con integridad y sin redundancia?</li>
+          <li><strong style="color:var(--verde-xl)">Relaciones N:M con semántica propia:</strong> cada partido vincula dos selecciones con roles y estadísticas distintas — exige una entidad asociativa para calcular bien la tabla de posiciones</li>
+          <li><strong style="color:var(--verde-xl)">Claves compuestas en entidades débiles:</strong> Jugador se identifica por numCamiseta + idSeleccion; una FK mal modelada genera huérfanos en la carga masiva</li>
+          <li><strong style="color:var(--verde-xl)">Reglas de negocio variables por fase:</strong> grupos acumulan puntos, eliminatorias aplican prórroga — sin objetos programables habría que reescribir lógica en cada reporte</li>
+          <li>La solución: un modelo relacional en <strong style="color:var(--dorado)">3FN en SQL Server</strong> con <strong style="color:var(--dorado)">10 objetos programables</strong></li>
         </ul>
       </div>
       <div class="ctx-card">
@@ -522,7 +488,6 @@ body.present-mode #timer { top: 10px; right: 10px; }
        SLIDE 3 — OBJETIVO Y ALCANCE
        ============================================================ -->
   <div class="slide" id="slide-3">
-    <div class="slide-time-badge">⏱ ~2 min</div>
     <div class="slide-title">Objetivo General y Alcance</div>
     <div class="slide-subtitle">MundialFIFA2026 · SQL Server · 3FN</div>
 
@@ -548,7 +513,6 @@ body.present-mode #timer { top: 10px; right: 10px; }
        SLIDE 4 — MODELO ER
        ============================================================ -->
   <div class="slide" id="slide-4">
-    <div class="slide-time-badge">⏱ ~4 min</div>
     <div class="slide-title">Fase 1 · Modelo Conceptual ER</div>
     <div class="slide-subtitle">Entidades, relaciones y cardinalidades</div>
     <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
@@ -560,7 +524,6 @@ body.present-mode #timer { top: 10px; right: 10px; }
        SLIDE 5 — MODELO LÓGICO
        ============================================================ -->
   <div class="slide" id="slide-5">
-    <div class="slide-time-badge">⏱ ~4 min</div>
     <div class="slide-title">Fase 2 · Modelo Lógico Relacional</div>
     <div class="slide-subtitle">Notación crow's foot · PK/FK · Normalización 3FN</div>
     <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
@@ -572,7 +535,6 @@ body.present-mode #timer { top: 10px; right: 10px; }
        SLIDE 6 — MODELO FÍSICO + OBJETOS
        ============================================================ -->
   <div class="slide" id="slide-6">
-    <div class="slide-time-badge">⏱ ~4 min</div>
     <div class="slide-title">Fase 3 & 4 · Modelo Físico + Objetos Programables</div>
 
     <div class="tabs">
@@ -635,7 +597,6 @@ body.present-mode #timer { top: 10px; right: 10px; }
        SLIDE 7 — DEMO
        ============================================================ -->
   <div class="slide" id="slide-7">
-    <div class="slide-time-badge">⏱ ~4 min</div>
     <div class="slide-title" style="color:var(--verde-xl)">Demo en Vivo</div>
     <div class="slide-subtitle" style="color:var(--txt-m)">SQL Server · MundialFIFA2026 · Resultados Simulados</div>
 
@@ -730,7 +691,6 @@ WHERE Grupo = 'A'</div>
        SLIDE 8 — CONCLUSIONES
        ============================================================ -->
   <div class="slide" id="slide-8">
-    <div class="slide-time-badge">⏱ ~1 min</div>
     <div class="slide-title">Conclusiones y Lecciones Aprendidas</div>
     <div class="slide-subtitle">FIFA World Cup 2026 · Base de Datos Relacional · UDLA FICA</div>
 
@@ -805,9 +765,6 @@ WHERE Grupo = 'A'</div>
    ============================================================ */
 const TOTAL = 8;
 let current = 1;
-let timerSeconds = 15 * 60;
-let timerRunning = false;
-let timerInterval = null;
 
 /* ============================================================
    NAVEGACIÓN
@@ -860,35 +817,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') togglePresentMode();
 });
 
-/* ============================================================
-   TIMER
-   ============================================================ */
-const timerDisplay = document.getElementById('timer-display');
-const timerEl = document.getElementById('timer');
-const timerBtn = document.getElementById('timer-btn');
-
-function formatTime(s) {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
-function updateTimerDisplay() {
-  timerDisplay.textContent = formatTime(timerSeconds);
-  timerEl.classList.toggle('red', timerSeconds <= 120);
-}
-timerBtn.addEventListener('click', () => {
-  timerRunning = !timerRunning;
-  timerBtn.textContent = timerRunning ? '⏸' : '▶';
-  if (timerRunning) {
-    timerInterval = setInterval(() => {
-      if (timerSeconds > 0) { timerSeconds--; updateTimerDisplay(); }
-      else { clearInterval(timerInterval); timerRunning = false; timerBtn.textContent = '▶'; }
-    }, 1000);
-  } else {
-    clearInterval(timerInterval);
-  }
-});
-updateTimerDisplay();
 
 /* ============================================================
    MODO PRESENTACIÓN
